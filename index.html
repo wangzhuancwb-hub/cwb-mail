@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>集团 ERP · 邮件推送中心</title>
+<style>
+  :root{
+    --bg:#f4f6fa;
+    --sidebar:#0f172a;
+    --sidebar-hover:#1b2437;
+    --primary:#2563eb;
+    --primary-d:#1d4ed8;
+    --text:#101828;
+    --muted:#667085;
+    --border:#e4e7ec;
+    --green:#12b76a;
+    --amber:#f79009;
+    --red:#f04438;
+    --radius:12px;
+    --shadow:0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased;
+  }
+  .app{display:flex;height:100vh;overflow:hidden}
+
+  /* ---------- 侧边栏 ---------- */
+  .sidebar{width:240px;flex-shrink:0;background:var(--sidebar);display:flex;flex-direction:column;color:#c7d0e0}
+  .brand{display:flex;align-items:center;gap:11px;padding:20px 18px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .brand-mark{
+    width:36px;height:36px;border-radius:9px;flex-shrink:0;
+    background:linear-gradient(135deg,#3b82f6,#6366f1);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:800;color:#fff;letter-spacing:.5px;
+  }
+  .brand-title{font-size:14px;font-weight:600;color:#fff;line-height:1.3}
+  .brand-sub{font-size:11px;color:#7c8aa3;margin-top:2px}
+  nav{flex:1;overflow-y:auto;padding:14px 10px}
+  .nav-group{font-size:10.5px;font-weight:600;color:#5b6b85;letter-spacing:.09em;text-transform:uppercase;padding:14px 10px 7px}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;
+    font-size:13px;color:#c7d0e0;cursor:pointer;user-select:none;transition:.15s;margin-bottom:2px;
+  }
+  .nav-item:hover{background:var(--sidebar-hover);color:#fff}
+  .nav-item.active{background:var(--primary);color:#fff;font-weight:500;box-shadow:0 2px 8px rgba(37,99,235,.35)}
+  .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.9}
+  .nav-count{margin-left:auto;background:rgba(255,255,255,.14);font-size:11px;padding:1px 7px;border-radius:20px;font-weight:600}
+  .nav-item.active .nav-count{background:rgba(255,255,255,.24)}
+  .sidebar-foot{
+    padding:13px 18px;border-top:1px solid rgba(255,255,255,.07);
+    font-size:11.5px;color:#7c8aa3;display:flex;align-items:center;gap:8px;
+  }
+  .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(18,183,106,.18)}
+
+  /* ---------- 主区 ---------- */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .topbar{
+    height:60px;flex-shrink:0;background:#fff;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;padding:0 28px;
+  }
+  .page-title{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+
+  .content{flex:1;overflow-y:auto;padding:24px 28px 60px}
+  .view{display:none;animation:fade .22s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ---------- 通用组件 ---------- */
+  .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .card-head{
+    display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--border);
+  }
+  .card-title{font-size:14px;font-weight:600}
+  .card-desc{font-size:12px;color:var(--muted);margin-top:2px}
+  .card-head-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .card-body{padding:18px}
+
+  .btn{
+    display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;
+    color:#344054;font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:8px;cursor:pointer;
+    transition:.15s;font-family:inherit;white-space:nowrap;
+  }
+  .btn:hover{background:#f9fafb;border-color:#d0d5dd}
+  .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 1px 2px rgba(37,99,235,.3)}
+  .btn-primary:hover{background:var(--primary-d);border-color:var(--primary-d)}
+  .btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+  .btn-ghost{border-color:transparent;background:transparent;color:var(--primary);padding:5px 7px}
+  .btn-ghost:hover{background:#eff4ff}
+  .btn-danger{color:#b42318;border-color:#fecdca;background:#fef3f2}
+  .btn-danger:hover{background:#fee4e2;border-color:#fda29b}
+
+  table{width:100%;border-collapse:collapse}
+  th{
+    text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em;
+    text-transform:uppercase;padding:9px 16px;background:#f9fafb;border-bottom:1px solid var(--border);white-space:nowrap;
+  }
+  td{padding:12px 16px;border-bottom:1px solid #f2f4f7;color:#344054;font-size:13px;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fafbfc}
+  .num{font-variant-numeric:tabular-nums}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;
+    font-size:11.5px;font-weight:500;white-space:nowrap;cursor:inherit;
+  }
+  .badge::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+  .badge.green{background:#ecfdf3;color:#067647}
+  .badge.amber{background:#fffaeb;color:#b54708}
+  .badge.red{background:#fef3f2;color:#b42318;cursor:pointer}
+  .badge.red:hover{background:#fee4e2}
+  .badge.gray{background:#f2f4f7;color:#475467}
+  .badge.blue{background:#eff8ff;color:#175cd3}
+  .badge.purple{background:#f4f3ff;color:#5925dc}
+
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:6px}
+
+  /* ---------- 概览 ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+  .stat{padding:16px 18px;cursor:pointer;transition:.15s}
+  .stat:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,24,40,.08)}
+  .stat-label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .stat-value{font-size:27px;font-weight:700;letter-spacing:-.02em;margin-top:8px;font-variant-numeric:tabular-nums}
+  .stat-value small{font-size:13px;font-weight:500;color:var(--muted);margin-left:3px}
+  .stat-foot{font-size:11.5px;color:var(--muted);margin-top:6px}
+  .stat-foot .up{color:#067647;font-weight:600}
+  .stat-foot .warn{color:#b54708;font-weight:600}
+
+  /* ---------- 筛选栏 ---------- */
+  .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .field{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
+  .field select,.field input{
+    font-family:inherit;font-size:12.5px;color:#344054;padding:6px 10px;border:1px solid var(--border);
+    border-radius:7px;background:#fff;outline:none;transition:.15s;
+  }
+  .field select:focus,.field input:focus{border-color:#84adff;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  .toolbar-right{margin-left:auto;display:flex;gap:8px}
+
+  /* ---------- 标签页 ---------- */
+  .tabs{display:flex;border-bottom:1px solid var(--border);padding:0 18px;gap:24px;background:#fff;border-radius:var(--radius) var(--radius) 0 0}
+  .tab{padding:12px 0;font-size:13px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s}
+  .tab.active{color:var(--text);border-color:var(--primary);font-weight:600}
+  .tab:hover{color:var(--text)}
+
+  /* ---------- 表单组件 ---------- */
+  .form-row{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center;margin-bottom:14px}
+  .form-row label{font-size:12.5px;color:var(--muted);text-align:right}
+  .form-row input,.form-row select,.form-row textarea{
+    font-family:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--border);
+    border-radius:7px;background:#fff;outline:none;width:100%;transition:.15s;
+  }
+  .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:#84adff;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  .form-row-inline{display:grid;grid-template-columns:120px 1fr 1fr;gap:12px;align-items:center;margin-bottom:14px}
+  .form-row-inline label{font-size:12.5px;color:var(--muted);text-align:right}
+  .form-full{margin-bottom:14px}
+  .form-full label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+  .form-toolbar{display:flex;gap:6px;padding:8px 10px;border:1px solid var(--border);border-bottom:none;border-radius:7px 7px 0 0;background:#f9fafb;flex-wrap:wrap}
+  .form-toolbar .btn{padding:4px 8px;font-size:11.5px}
+  .editor{
+    border:1px solid var(--border);border-radius:0 0 7px 7px;min-height:180px;padding:10px;font-size:13px;
+    background:#fff;line-height:1.8;
+  }
+  .var-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .var-tag{font-size:11px;padding:2px 8px;border-radius:5px;background:#eff4ff;color:#175cd3;cursor:pointer;border:1px solid #d1e9ff}
+  .var-tag:hover{background:#d1e9ff}
+
+  .form-section{
+    font-size:12px;font-weight:600;color:var(--text);padding:10px 0 6px;border-bottom:1px solid var(--border);
+    margin-bottom:14px;
+  }
+
+  /* ---------- 模板列表 ---------- */
+  .tpl-list{padding:14px}
+  .tpl-item{
+    padding:12px 14px;border-radius:8px;cursor:pointer;margin-bottom:6px;border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;transition:.15s;
+  }
+  .tpl-item:hover{background:#f9fafb;border-color:#d0d5dd}
+  .tpl-item h4{font-size:13px;font-weight:600;margin-bottom:3px}
+  .tpl-item p{font-size:11.5px;color:var(--muted)}
+
+  /* ---------- 失败处理页 ---------- */
+  .fail-detail-card{
+    background:#fef3f2;border:1px solid #fecdca;border-radius:10px;padding:14px 16px;margin-bottom:16px;
+  }
+  .fail-detail-card h4{font-size:13px;font-weight:600;color:#b42318;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .fail-detail-card p{font-size:12.5px;color:#344054;line-height:1.7}
+  .retry-timeline{
+    border-left:2px solid #fecdca;margin-left:8px;padding-left:16px;margin-top:8px;
+  }
+  .retry-item{margin-bottom:12px;position:relative}
+  .retry-item::before{
+    content:"";position:absolute;left:-21px;top:4px;width:10px;height:10px;border-radius:50%;
+    background:#f04438;border:2px solid #fff;box-shadow:0 0 0 2px #fecdca;
+  }
+  .retry-item .time{font-size:11.5px;color:var(--muted)}
+  .retry-item .desc{font-size:12.5px;margin-top:2px}
+
+  /* ---------- 邮件预览弹窗 ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(16,24,40,.5);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;z-index:100;padding:28px;
+  }
+  .overlay.show{display:flex;animation:fade .18s}
+  .modal{
+    background:#fff;border-radius:14px;width:100%;max-width:720px;max-height:88vh;
+    display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 48px rgba(16,24,40,.24);
+  }
+  .modal.wide{max-width:860px}
+  .modal-head{
+    padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;
+  }
+  .modal-head h3{font-size:14.5px;font-weight:600}
+  .modal-close{
+    margin-left:auto;width:28px;height:28px;border-radius:7px;border:none;background:#f2f4f7;
+    cursor:pointer;color:#667085;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;
+  }
+  .modal-close:hover{background:#e4e7ec}
+  .modal-body{padding:20px;overflow-y:auto;flex:1}
+  .mail-meta{display:grid;grid-template-columns:100px 1fr;gap:9px 14px;font-size:12.5px;margin-bottom:16px}
+  .mail-meta dt{color:var(--muted)}
+  .mail-meta dd{color:#344054;font-weight:500;word-break:break-all}
+  .mail-subject{
+    background:#f9fafb;border:1px solid var(--border);border-left:3px solid var(--primary);
+    border-radius:0 8px 8px 0;padding:11px 14px;font-size:13px;font-weight:600;margin-bottom:16px;
+  }
+  .attachment{
+    display:inline-flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:8px;
+    padding:8px 12px;font-size:12.5px;background:#fcfcfd;margin-bottom:16px;
+  }
+  .attachment .icon{
+    width:26px;height:26px;border-radius:6px;background:#ecfdf3;color:#067647;
+    display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;
+  }
+  .mail-body{
+    border-top:1px solid var(--border);padding-top:16px;font-size:13px;line-height:1.8;color:#344054;
+  }
+  .mail-body p{margin-bottom:10px}
+  .mail-body table{font-size:12px;margin:12px 0;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .mail-body th{background:#f9fafb;padding:7px 10px;font-size:10.5px}
+  .mail-body td{padding:7px 10px;font-size:12px}
+  .modal-foot{
+    padding:13px 20px;border-top:1px solid var(--border);display:flex;gap:9px;justify-content:flex-end;
+    background:#fcfcfd;flex-shrink:0;
+  }
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;
+    background:#101828;color:#fff;font-size:13px;padding:11px 20px;border-radius:9px;
+    box-shadow:0 8px 24px rgba(16,24,40,.3);transition:.25s;z-index:200;display:flex;align-items:center;gap:9px;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast .ok{color:#32d583;font-weight:700}
+
+  .empty-note{
+    padding:26px;text-align:center;color:var(--muted);font-size:12.5px;
+    background:#fcfcfd;border:1px dashed var(--border);border-radius:10px;margin:0 18px 18px;
+  }
+  .link{color:var(--primary);cursor:pointer;font-weight:500}
+  .link:hover{text-decoration:underline}
+
+  @media (max-width:1180px){
+    .stat-grid{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ================= 侧边栏 ================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">ERP</div>
+      <div>
+        <div class="brand-title">邮件推送中心</div>
+        <div class="brand-sub">集团化 · 多组织</div>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-group">监控</div>
+      <a class="nav-item active" data-view="dashboard" data-title="运行概览">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        运行概览
+      </a>
+
+      <div class="nav-group">配置</div>
+      <a class="nav-item" data-view="orgs" data-title="组织邮箱配置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+        组织邮箱配置
+      </a>
+      <a class="nav-item" data-view="routes" data-title="路由与模板">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v5a3 3 0 0 0 3 3h6"/></svg>
+        路由与模板
+      </a>
+
+      <div class="nav-group">业务推送</div>
+      <a class="nav-item" data-view="daily" data-title="每日合并推送">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+        每日合并推送
+        <span class="nav-count">2</span>
+      </a>
+      <a class="nav-item" data-view="container" data-title="货柜即时推送">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-6 9 6v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 21V11M15 21V11"/></svg>
+        货柜即时推送
+        <span class="nav-count">1</span>
+      </a>
+
+      <div class="nav-group">审计</div>
+      <a class="nav-item" data-view="logs" data-title="推送日志">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        推送日志
+      </a>
+      <a class="nav-item" data-view="fail" data-title="失败处理">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+        失败处理
+        <span class="nav-count">1</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <span class="pulse"></span> SMTP 服务正常 · 5/5 组织
+    </div>
+  </aside>
+
+  <!-- ================= 主区域 ================= -->
+  <div class="main">
+    <header class="topbar">
+      <div class="page-title" id="pageTitle">运行概览</div>
+    </header>
+
+    <div class="content">
+
+      <!-- ============ 概览 ============ -->
+      <section class="view active" id="view-dashboard">
+        <div class="stat-grid">
+          <div class="card stat">
+            <div class="stat-label">今日推送成功</div>
+            <div class="stat-value">28<small>封</small></div>
+            <div class="stat-foot"><span class="up">▲ 12%</span> 较昨日</div>
+          </div>
+          <div class="card stat">
+            <div class="stat-label">待推送批次</div>
+            <div class="stat-value">2<small>批</small></div>
+            <div class="stat-foot">下次调度 01:00</div>
+          </div>
+          <div class="card stat" onclick="goToFail()">
+            <div class="stat-label">推送失败 <span style="color:var(--muted);font-weight:400">（点击处理）</span></div>
+            <div class="stat-value" style="color:#b42318">1<small>封</small></div>
+            <div class="stat-foot"><span class="warn">需人工处理</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">最近 10 条推送事件</div>
+              <div class="card-desc">按发送时间倒序排列</div>
+            </div>
+            <div class="card-head-actions">
+              <button class="btn btn-sm" onclick="toast('已跳转至完整日志')">查看全部</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>时间</th><th>场景</th><th>发件组织</th><th>发件邮箱</th><th>邮件主题</th><th>收件人</th><th>状态</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="num">12:03</td>
+                <td><span class="badge blue">货柜即时</span></td>
+                <td>SANMU EXPRESS HK</td>
+                <td class="mono">san@sanmuhk.com</td>
+                <td>Notification of Container Shipment</td>
+                <td class="mono">doc@nobleza.eu</td>
+                <td><span class="badge red" onclick="goToFail()">失败</span></td>
+              </tr>
+              <tr>
+                <td class="num">11:15</td>
+                <td><span class="badge blue">货柜即时</span></td>
+                <td>AIGOLEO LIMITED HK</td>
+                <td class="mono">cloud@aigoleo.hk</td>
+                <td>Notification of Container Shipment</td>
+                <td class="mono">Aigostarfr@aigostar.com</td>
+                <td><span class="badge green">已送达</span></td>
+              </tr>
+              <tr>
+                <td class="num">09:42</td>
+                <td><span class="badge blue">货柜即时</span></td>
+                <td>AIGOSTAR SPAIN HK</td>
+                <td class="mono">zoe@aigostar.com</td>
+                <td>Notification of Container Shipment</td>
+                <td class="mono">admin02@artelights.com</td>
+                <td><span class="badge green">已送达</span></td>
+              </tr>
+              <tr>
+                <td class="num">01:00</td>
+                <td><span class="badge purple">每日合并</span></td>
+                <td>AGZZX OPTOELECTRONICS</td>
+                <td class="mono">leo@fzagzzx.com</td>
+                <td>出货通知</td>
+                <td class="mono">zoe@aigostar.com</td>
+                <td><span class="badge green">已送达</span></td>
+              </tr>
+              <tr>
+                <td class="num">01:00</td>
+                <td><span class="badge purple">每日合并</span></td>
+                <td>FUZHOU INFINITE</td>
+                <td class="mono">alex@fzinfinite.com</td>
+                <td>出货通知</td>
+                <td class="mono">san@sanmuhk.com</td>
+                <td><span class="badge green">已送达</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ 组织邮箱 ============ -->
+      <section class="view" id="view-orgs">
+        <div class="toolbar">
+          <div class="field">
+            组织角色：
+            <select><option>全部</option><option>国内主体</option><option>香港中转</option><option>海外主体</option></select>
+          </div>
+          <div class="field">
+            状态：
+            <select><option>全部</option><option>启用</option><option>停用</option></select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn">批量测试</button>
+            <button class="btn btn-primary" onclick="openOrgModal()">+ 新增组织邮箱</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">组织 × 邮箱映射</div>
+              <div class="card-desc">发件人身份由「单据所属组织」决定，而非登录用户 —— 这是整套闭环可信度的基础</div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>组织</th><th>角色</th><th>发件邮箱</th><th>SMTP 服务器</th><th>域名认证</th><th>状态</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>AGZZX OPTOELECTRONICS TECHNOLOGY CO.,LTD</b><br><span style="font-size:11.5px;color:#667085">CN-001</span></td>
+                <td><span class="badge gray">国内主体</span></td>
+                <td class="mono">leo@fzagzzx.com</td>
+                <td class="mono">smtp.fzagzzx.com:465</td>
+                <td><span class="badge green">SPF/DKIM 已对齐</span></td>
+                <td><span class="badge green">启用</span></td>
+                <td style="text-align:right"><span class="link" onclick="openOrgModal()">编辑</span></td>
+              </tr>
+              <tr>
+                <td><b>FUZHOU INFINITE INFORMATION TECHNOLOGY CO.,LTD.</b><br><span style="font-size:11.5px;color:#667085">CN-002</span></td>
+                <td><span class="badge gray">国内主体</span></td>
+                <td class="mono">alex@fzinfinite.com</td>
+                <td class="mono">smtp.fzinfinite.com:465</td>
+                <td><span class="badge green">SPF/DKIM 已对齐</span></td>
+                <td><span class="badge green">启用</span></td>
+                <td style="text-align:right"><span class="link" onclick="openOrgModal()">编辑</span></td>
+              </tr>
+              <tr>
+                <td><b>AIGOSTAR SPAIN LIMITED HK</b><br><span style="font-size:11.5px;color:#667085">HK-001</span></td>
+                <td><span class="badge blue">香港中转</span></td>
+                <td class="mono">zoe@aigostar.com</td>
+                <td class="mono">smtp.aigostar.com:465</td>
+                <td><span class="badge green">SPF/DKIM 已对齐</span></td>
+                <td><span class="badge green">启用</span></td>
+                <td style="text-align:right"><span class="link" onclick="openOrgModal()">编辑</span></td>
+              </tr>
+              <tr>
+                <td><b>AIGOLEO LIMITED HK</b><br><span style="font-size:11.5px;color:#667085">HK-002</span></td>
+                <td><span class="badge blue">香港中转</span></td>
+                <td class="mono">cloud@aigoleo.hk</td>
+                <td class="mono">smtp.aigoleo.hk:465</td>
+                <td><span class="badge green">SPF/DKIM 已对齐</span></td>
+                <td><span class="badge green">启用</span></td>
+                <td style="text-align:right"><span class="link" onclick="openOrgModal()">编辑</span></td>
+              </tr>
+              <tr>
+                <td><b>SANMU EXPRESS LIMITED HK</b><br><span style="font-size:11.5px;color:#667085">HK-003</span></td>
+                <td><span class="badge blue">香港中转</span></td>
+                <td class="mono">san@sanmuhk.com</td>
+                <td class="mono">smtp.sanmuhk.com:465</td>
+                <td><span class="badge green">SPF/DKIM 已对齐</span></td>
+                <td><span class="badge green">启用</span></td>
+                <td style="text-align:right"><span class="link" onclick="openOrgModal()">编辑</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ 路由与模板 ============ -->
+      <section class="view" id="view-routes">
+        <div class="card">
+          <div class="tabs">
+            <div class="tab active" data-tab="route">收件人路由规则</div>
+            <div class="tab" data-tab="tpl">邮件模板配置</div>
+          </div>
+
+          <!-- 路由规则面板 -->
+          <div class="tab-panel" id="tab-route">
+            <div class="toolbar" style="margin:16px 18px 0">
+              <div class="field">
+                链路：
+                <select><option>全部链路</option><option>国内 → 中转</option><option>中转 → 国外</option></select>
+              </div>
+              <div class="toolbar-right">
+                <button class="btn btn-primary" onclick="openRouteModal()">+ 新增路由规则</button>
+              </div>
+            </div>
+
+            <div style="padding:0 18px 18px">
+              <table>
+                <thead>
+                  <tr><th>规则编码</th><th>链路</th><th>发件组织</th><th>目的组织</th><th>触发方式</th><th>邮件模板</th><th>状态</th><th></th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mono">CN-HK-0001</td>
+                    <td><span class="badge gray">国内→中转</span></td>
+                    <td>AGZZX OPTOELECTRONICS</td>
+                    <td>AIGOSTAR SPAIN HK</td>
+                    <td><span class="badge purple">每日合并 · 01:00</span></td>
+                    <td class="mono">CN-HK-0001</td>
+                    <td><span class="badge green">启用</span></td>
+                    <td style="text-align:right"><span class="link" onclick="openRouteModal()">编辑</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">CN-HK-0002</td>
+                    <td><span class="badge gray">国内→中转</span></td>
+                    <td>FUZHOU INFINITE</td>
+                    <td>SANMU EXPRESS HK</td>
+                    <td><span class="badge purple">每日合并 · 01:00</span></td>
+                    <td class="mono">CN-HK-0001</td>
+                    <td><span class="badge green">启用</span></td>
+                    <td style="text-align:right"><span class="link" onclick="openRouteModal()">编辑</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">HK-IT-0001</td>
+                    <td><span class="badge gray">中转→国外</span></td>
+                    <td>AIGOSTAR SPAIN HK</td>
+                    <td>ARTE LIGHT S.R.L. (IT)</td>
+                    <td><span class="badge blue">货柜即时</span></td>
+                    <td class="mono">HK-XX-0001</td>
+                    <td><span class="badge green">启用</span></td>
+                    <td style="text-align:right"><span class="link" onclick="openRouteModal()">编辑</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">HK-FR-0001</td>
+                    <td><span class="badge gray">中转→国外</span></td>
+                    <td>AIGOLEO LIMITED HK</td>
+                    <td>AIGOSTAR SARL (FR)</td>
+                    <td><span class="badge blue">货柜即时</span></td>
+                    <td class="mono">HK-XX-0001</td>
+                    <td><span class="badge green">启用</span></td>
+                    <td style="text-align:right"><span class="link" onclick="openRouteModal()">编辑</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">HK-XX-9999</td>
+                    <td><span class="badge gray">中转→国外</span></td>
+                    <td>SANMU EXPRESS HK</td>
+                    <td>其他组织（默认）</td>
+                    <td><span class="badge blue">货柜即时</span></td>
+                    <td class="mono">HK-XX-0001</td>
+                    <td><span class="badge green">启用</span></td>
+                    <td style="text-align:right"><span class="link" onclick="openRouteModal()">编辑</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 邮件模板面板 -->
+          <div class="tab-panel" id="tab-tpl" style="display:none">
+            <div class="tpl-list">
+              <div class="tpl-item">
+                <div>
+                  <h4>国内→香港出货通知（中文）</h4>
+                  <p>CN-HK-0001 · 每日合并场景</p>
+                </div>
+                <button class="btn btn-sm btn-ghost" onclick="openTplModal('cn')">编辑</button>
+              </div>
+              <div class="tpl-item">
+                <div>
+                  <h4>香港→国外清关通知（英文）</h4>
+                  <p>HK-XX-0001 · 货柜即时场景</p>
+                </div>
+                <button class="btn btn-sm btn-ghost" onclick="openTplModal('en')">编辑</button>
+              </div>
+              <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="openNewTplModal()">+ 新建模板</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 每日合并推送 ============ -->
+      <section class="view" id="view-daily">
+        <div class="toolbar">
+          <div class="field">业务日期：<input type="date" value="2026-10-26"></div>
+          <div class="field">
+            发件组织：
+            <select><option>AGZZX OPTOELECTRONICS</option><option>FUZHOU INFINITE</option><option>AIGOSTAR SPAIN HK</option></select>
+          </div>
+          <div class="field">
+            状态：
+            <select><option>全部</option><option>待推送</option><option>已推送</option><option>已跳过</option><option>推送失败</option></select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn" onclick="toast('已重新执行当日聚合查询')">重新聚合</button>
+            <button class="btn btn-primary" onclick="toast('已触发批量推送任务')">批量推送</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">2026-10-26 聚合批次</div>
+              <div class="card-desc">每日凌晨 01:00 自动调度，按「发件组织 + 收件中转方」分组，同组内全部单据合并为一封邮件</div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>批次</th><th>发件组织</th><th>收件方</th><th>单据类型</th><th>单据数</th><th>明细行</th><th>金额合计</th><th>状态</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">20261026-01</td>
+                <td>AGZZX OPTOELECTRONICS</td>
+                <td>AIGOSTAR SPAIN HK</td>
+                <td>特殊销售单</td>
+                <td class="num">3</td>
+                <td class="num">24</td>
+                <td class="num">¥186,420.00</td>
+                <td><span class="badge amber">待推送</span></td>
+                <td>
+                  <button class="btn btn-sm btn-ghost" onclick="openDailyPreview()">预览</button>
+                  <button class="btn btn-sm" onclick="pushDaily(this)">立即推送</button>
+                </td>
+              </tr>
+              <tr>
+                <td class="mono">20261026-02</td>
+                <td>FUZHOU INFINITE</td>
+                <td>SANMU EXPRESS HK</td>
+                <td>入库单</td>
+                <td class="num">1</td>
+                <td class="num">8</td>
+                <td class="num">¥52,300.00</td>
+                <td><span class="badge amber">待推送</span></td>
+                <td>
+                  <button class="btn btn-sm btn-ghost" onclick="openDailyPreview()">预览</button>
+                  <button class="btn btn-sm" onclick="pushDaily(this)">立即推送</button>
+                </td>
+              </tr>
+              <tr>
+                <td class="mono">20261026-00</td>
+                <td>AGZZX OPTOELECTRONICS</td>
+                <td>SANMU EXPRESS HK</td>
+                <td>—</td>
+                <td class="num">0</td>
+                <td class="num">0</td>
+                <td>—</td>
+                <td><span class="badge gray">已跳过</span></td>
+                <td><span style="font-size:12px;color:#98a2b3">无数据，未生成邮件</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="empty-note" style="text-align:left">
+            ℹ️ <b>无数据不发送：</b>01:00 调度时该组织当日无符合条件单据，聚合结果集为空，任务直接结束，未进入邮件生成与发送分支。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 货柜即时推送 ============ -->
+      <section class="view" id="view-container">
+        <div class="toolbar">
+          <div class="field">
+            目的国：
+            <select><option>全部</option><option>意大利</option><option>法国</option><option>西班牙</option><option>德国</option></select>
+          </div>
+          <div class="field">
+            推送状态：
+            <select><option>全部</option><option>已发送</option><option>待触发</option><option>失败</option></select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn">导出</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">清关资料推送队列</div>
+              <div class="card-desc">审批状态变更为「已通过」的瞬间触发，每个货柜独立成封，附件取自审批通过的清关资料</div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>货柜号</th><th>目的国</th><th>国外公司</th><th>清关资料号</th><th>系统溢价</th><th>审批状态</th><th>推送状态</th><th>发送时间</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono"><b>MSKU1234567</b></td>
+                <td>意大利</td>
+                <td>ARTE LIGHT S.R.L.</td>
+                <td class="mono">AASCGHG202602250003</td>
+                <td class="num">€ 1,284.50</td>
+                <td><span class="badge green">已通过</span></td>
+                <td><span class="badge green">已发送</span></td>
+                <td class="num">10-26 09:42</td>
+                <td><button class="btn btn-sm btn-ghost" onclick="openContainerPreview('MSKU1234567','意大利','ARTE LIGHT S.R.L.','admin02@artelights.com','AASCGHG202602250003')">查看邮件</button></td>
+              </tr>
+              <tr>
+                <td class="mono"><b>TCLU7654321</b></td>
+                <td>法国</td>
+                <td>AIGOSTAR SARL</td>
+                <td class="mono">AASCGHG202602250002</td>
+                <td class="num">€ 968.20</td>
+                <td><span class="badge green">已通过</span></td>
+                <td><span class="badge green">已发送</span></td>
+                <td class="num">10-26 11:15</td>
+                <td><button class="btn btn-sm btn-ghost" onclick="openContainerPreview('TCLU7654321','法国','AIGOSTAR SARL','Aigostarfr@aigostar.com','AASCGHG202602250002')">查看邮件</button></td>
+              </tr>
+              <tr>
+                <td class="mono"><b>OOLU9081726</b></td>
+                <td>意大利</td>
+                <td>EURO PET S.R.L.</td>
+                <td class="mono">AASCGHG202602250004</td>
+                <td class="num">€ 1,102.00</td>
+                <td><span class="badge amber">审批中</span></td>
+                <td><span class="badge gray">待触发</span></td>
+                <td>—</td>
+                <td><span style="font-size:12px;color:#98a2b3">审批通过后自动发送</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><b>CMAU3344556</b></td>
+                <td>西班牙</td>
+                <td>IMPERIAL NOBLEZA SL</td>
+                <td class="mono">AASCGHG202602250001</td>
+                <td class="num">€ 640.75</td>
+                <td><span class="badge green">已通过</span></td>
+                <td><span class="badge red" onclick="goToFail()">失败</span></td>
+                <td class="num">10-26 12:03</td>
+                <td><button class="btn btn-sm" onclick="goToFail()">处理</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="empty-note" style="text-align:left;color:#b42318;background:#fef3f2;border-color:#fecdca">
+            ✕ <b>CMAU3344556 推送失败：</b>SMTP 550 5.1.1 收件方地址不存在（doc@nobleza.eu）。已记录至失败处理页，请核对收件人后重试。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 推送日志 ============ -->
+      <section class="view" id="view-logs">
+        <div class="toolbar">
+          <div class="field">时间范围：<input type="date" value="2026-10-26"> 至 <input type="date" value="2026-10-26"></div>
+          <div class="field">
+            场景：
+            <select><option>全部</option><option>每日合并</option><option>货柜即时</option></select>
+          </div>
+          <div class="field">
+            状态：
+            <select><option>全部</option><option>成功</option><option>失败</option><option>跳过</option></select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn">导出 CSV</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">推送日志</div>
+              <div class="card-desc">幂等键：每日合并按「批次号」、货柜即时按「货柜号 + 清关资料单号」，全链路可追溯</div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>发送时间</th><th>场景</th><th>发件组织</th><th>收件人</th><th>主题 / 幂等键</th><th>附件</th><th>状态</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="num">10-26 12:03:41</td>
+                <td><span class="badge blue">货柜即时</span></td>
+                <td>SANMU EXPRESS HK</td>
+                <td class="mono">doc@nobleza.eu</td>
+                <td><span class="mono">CMAU3344556 / AASCGHG202602250001</span></td>
+                <td class="num">1 个</td>
+                <td><span class="badge red" onclick="goToFail()">失败</span></td>
+                <td><button class="btn btn-sm btn-ghost" onclick="goToFail()">处理</button></td>
+              </tr>
+              <tr>
+                <td class="num">10-26 11:15:08</td>
+                <td><span class="badge blue">货柜即时</span></td>
+                <td>AIGOLEO LIMITED HK</td>
+                <td class="mono">Aigostarfr@aigostar.com</td>
+                <td><span class="mono">TCLU7654321 / AASCGHG202602250002</span></td>
+                <td class="num">1 个</td>
+                <td><span class="badge green">成功</span></td>
+                <td><button class="btn btn-sm btn-ghost" onclick="openLogDetail()">详情</button></td>
+              </tr>
+              <tr>
+                <td class="num">10-26 09:42:33</td>
+                <td><span class="badge blue">货柜即时</span></td>
+                <td>AIGOSTAR SPAIN HK</td>
+                <td class="mono">admin02@artelights.com</td>
+                <td><span class="mono">MSKU1234567 / AASCGHG202602250003</span></td>
+                <td class="num">1 个</td>
+                <td><span class="badge green">成功</span></td>
+                <td><button class="btn btn-sm btn-ghost" onclick="openLogDetail()">详情</button></td>
+              </tr>
+              <tr>
+                <td class="num">10-26 01:00:12</td>
+                <td><span class="badge purple">每日合并</span></td>
+                <td>AGZZX OPTOELECTRONICS</td>
+                <td class="mono">zoe@aigostar.com</td>
+                <td><span class="mono">20261026-01</span></td>
+                <td class="num">1 个</td>
+                <td><span class="badge green">成功</span></td>
+                <td><button class="btn btn-sm btn-ghost" onclick="openLogDetail()">详情</button></td>
+              </tr>
+              <tr>
+                <td class="num">10-26 01:00:09</td>
+                <td><span class="badge purple">每日合并</span></td>
+                <td>AGZZX OPTOELECTRONICS</td>
+                <td>—</td>
+                <td>聚合结果为空</td>
+                <td>—</td>
+                <td><span class="badge gray">跳过</span></td>
+                <td><button class="btn btn-sm btn-ghost" onclick="openLogDetail()">详情</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ 失败处理页面 ============ -->
+      <section class="view" id="view-fail">
+        <div class="toolbar">
+          <div class="field">失败时间：<input type="date" value="2026-10-26"> 至 <input type="date" value="2026-10-26"></div>
+          <div class="field">
+            失败类型：
+            <select><option>全部</option><option>收件人不存在</option><option>SMTP连接失败</option><option>附件生成失败</option><option>邮箱限流</option></select>
+          </div>
+          <div class="field">
+            处理状态：
+            <select><option>全部</option><option>待处理</option><option>处理中</option><option>已解决</option></select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn">批量重试</button>
+            <button class="btn btn-primary" onclick="toast('已导出失败清单')">导出清单</button>
+          </div>
+        </div>
+
+        <div class="two-col" style="grid-template-columns:1fr 1.2fr">
+          <!-- 左侧失败列表 -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">待处理失败记录</div>
+                <div class="card-desc">共 1 条待处理，自动重试 3 次失败后进入人工处理队列</div>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr><th>时间</th><th>场景</th><th>发件组织</th><th>失败原因</th><th>重试</th><th>状态</th></tr>
+              </thead>
+              <tbody>
+                <tr style="background:#eff4ff">
+                  <td class="num">12:03:41</td>
+                  <td><span class="badge blue">货柜即时</span></td>
+                  <td>SANMU EXPRESS HK</td>
+                  <td style="font-size:12px">SMTP 550 收件人不存在</td>
+                  <td class="num">3/3</td>
+                  <td><span class="badge red">待处理</span></td>
+                </tr>
+                <tr>
+                  <td class="num">01:12:05</td>
+                  <td><span class="badge purple">每日合并</span></td>
+                  <td>AGZZX OPTOELECTRONICS</td>
+                  <td style="font-size:12px">附件生成超时</td>
+                  <td class="num">1/3</td>
+                  <td><span class="badge green">已自动恢复</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 右侧失败详情 -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">失败详情 · 货柜 CMAU3344556</div>
+                <div class="card-desc">关联清关资料单 AASCGHG202602250001</div>
+              </div>
+              <div class="card-head-actions">
+                <span class="badge red">待处理</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="fail-detail-card">
+                <h4>⚠️ 失败原因：收件人邮箱地址不存在</h4>
+                <p><b>SMTP 返回码：</b>550 5.1.1 <span class="mono">doc@nobleza.eu</span> - User unknown</p>
+                <p><b>触发场景：</b>清关资料审批通过后自动触发推送</p>
+                <p><b>发件邮箱：</b><span class="mono">san@sanmuhk.com</span></p>
+              </div>
+
+              <div class="form-section">重试轨迹</div>
+              <div class="retry-timeline">
+                <div class="retry-item">
+                  <div class="time">12:03:41 · 第 3 次重试（失败）</div>
+                  <div class="desc">SMTP 550 5.1.1 收件人不存在，达到最大重试次数，进入人工处理队列</div>
+                </div>
+                <div class="retry-item">
+                  <div class="time">12:08:41 · 第 2 次重试（失败）</div>
+                  <div class="desc">自动重试，同样返回 550 错误</div>
+                </div>
+                <div class="retry-item">
+                  <div class="time">12:03:41 · 第 1 次发送（失败）</div>
+                  <div class="desc">首次触发推送，SMTP 返回收件人不存在</div>
+                </div>
+              </div>
+
+              <div class="form-section" style="margin-top:20px">处理操作</div>
+              <div class="form-row">
+                <label>修改收件人</label>
+                <input type="text" value="doc@nobleza.eu" id="failToEmail">
+              </div>
+              <div class="form-row">
+                <label>更换发件邮箱</label>
+                <select>
+                  <option>san@sanmuhk.com（当前）</option>
+                  <option>finance@sanmuhk.com</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>处理备注</label>
+                <textarea rows="2" placeholder="填写处理说明，如：已联系对方更新邮箱地址"></textarea>
+              </div>
+
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+                <button class="btn btn-danger" onclick="toast('已标记为忽略')">标记忽略</button>
+                <button class="btn" onclick="toast('已标记为处理中')">暂存</button>
+                <button class="btn btn-primary" onclick="retryFail()">修改后重试</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= 通用弹窗 ================= -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBox">
+    <div class="modal-head">
+      <h3 id="modalTitle">详情</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot">
+      <button class="btn" onclick="closeModal()">关闭</button>
+      <button class="btn btn-primary" onclick="closeModal();toast('操作已执行')">确认</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ok">✓</span><span id="toastText"></span></div>
+
+<script>
+  /* ---------- 视图切换 ---------- */
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      item.classList.add('active');
+      const view = item.dataset.view;
+      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
+      document.getElementById('pageTitle').textContent = item.dataset.title;
+      document.querySelector('.content').scrollTop = 0;
+    });
+  });
+
+  /* ---------- 跳转到失败处理页 ---------- */
+  function goToFail() {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector('[data-view="fail"]').classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-fail').classList.add('active');
+    document.getElementById('pageTitle').textContent = '失败处理';
+    document.querySelector('.content').scrollTop = 0;
+  }
+
+  /* ---------- 标签切换 ---------- */
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const parent = tab.closest('.tabs');
+      parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const tabKey = tab.dataset.tab;
+      document.querySelectorAll('.tab-panel').forEach(p => p.style.display = p.id === 'tab-' + tabKey ? 'block' : 'none');
+    });
+  });
+
+  /* ---------- Toast ---------- */
+  let toastTimer;
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastText').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  /* ---------- 弹窗通用方法 ---------- */
+  function openModal(html, title='详情', showFoot=true, wide=false) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('modalFoot').style.display = showFoot ? 'flex' : 'none';
+    document.getElementById('modalBox').classList.toggle('wide', wide);
+    document.getElementById('overlay').classList.add('show');
+  }
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('show');
+  }
+  document.getElementById('overlay').addEventListener('click', e => {
+    if (e.target.id === 'overlay') closeModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  /* ---------- 1. 组织邮箱详细维护弹窗 ---------- */
+  function openOrgModal() {
+    const html = `
+      <div class="form-section">基础信息</div>
+      <div class="form-row">
+        <label>组织名称</label>
+        <input type="text" value="AGZZX OPTOELECTRONICS TECHNOLOGY CO.,LTD">
+      </div>
+      <div class="form-row-inline">
+        <label>组织编码</label>
+        <input type="text" value="CN-001" disabled>
+        <select>
+          <option>国内主体</option>
+          <option>香港中转</option>
+          <option>海外主体</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>绑定ERP账套</label>
+        <select>
+          <option>AGZZX 国内销售账套</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>所属国家</label>
+        <select>
+          <option>CN</option>
+          <option>HK</option>
+          <option>IT</option>
+          <option>FR</option>
+          <option>ES</option>
+          <option>DE</option>
+          <option>US</option>
+          <option>GB</option>
+          <option>PL</option>
+        </select>
+      </div>
+
+      <div class="form-section">发件邮箱配置</div>
+      <div class="form-row">
+        <label>发件人显示名称</label>
+        <input type="text" value="AGZZX OPTOELECTRONICS ERP系统">
+      </div>
+      <div class="form-row">
+        <label>发件邮箱地址</label>
+        <input type="text" value="leo@fzagzzx.com">
+      </div>
+      <div class="form-row">
+        <label>回复邮箱地址</label>
+        <input type="text" value="finance@fzagzzx.com">
+      </div>
+
+      <div class="form-section">SMTP服务器配置</div>
+      <div class="form-row-inline">
+        <label>SMTP服务器</label>
+        <input type="text" value="smtp.fzagzzx.com">
+        <input type="text" value="465">
+      </div>
+      <div class="form-row-inline">
+        <label>加密方式</label>
+        <select>
+          <option>SSL/TLS（推荐）</option>
+          <option>STARTTLS</option>
+          <option>不加密</option>
+        </select>
+        <select>
+          <option>授权码认证</option>
+          <option>密码认证</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>邮箱授权码</label>
+        <input type="password" value="************">
+      </div>
+
+      <div class="form-section">发送限制配置</div>
+      <div class="form-row-inline">
+        <label>每日发送上限</label>
+        <input type="number" value="500">
+        <select>
+          <option>启用</option>
+          <option>停用</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>邮箱状态</label>
+        <select>
+          <option>启用</option>
+          <option>停用</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>最后测试时间</label>
+        <input type="text" value="2026-10-20 14:32:18 · 测试通过" disabled>
+      </div>
+      <div class="form-row">
+        <label>备注</label>
+        <textarea rows="2" placeholder="填写配置说明、联系人等信息"></textarea>
+      </div>
+
+      <div style="text-align:right;margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="closeModal()">取消</button>
+        <button class="btn" onclick="toast('连通性测试通过')">测试连接</button>
+        <button class="btn btn-primary" onclick="closeModal();toast('组织邮箱配置已保存')">保存</button>
+      </div>
+    `;
+    openModal(html, '编辑组织邮箱配置', false, true);
+  }
+
+  /* ---------- 2. 路由规则详细维护弹窗 ---------- */
+  function openRouteModal() {
+    const html = `
+      <div class="form-section">基础规则</div>
+      <div class="form-row-inline">
+        <label>规则编码</label>
+        <input type="text" value="HK-IT-0001" disabled>
+        <select>
+          <option>国内 → 中转</option>
+          <option>中转 → 国外</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>发件组织</label>
+        <select id="routeOrgSelect" onchange="updateRouteEmail()">
+          <option data-email="zoe@aigostar.com">AIGOSTAR SPAIN LIMITED HK</option>
+          <option data-email="cloud@aigoleo.hk">AIGOLEO LIMITED HK</option>
+          <option data-email="san@sanmuhk.com">SANMU EXPRESS LIMITED HK</option>
+          <option data-email="leo@fzagzzx.com">AGZZX OPTOELECTRONICS TECHNOLOGY CO.,LTD</option>
+          <option data-email="alex@fzinfinite.com">FUZHOU INFINITE INFORMATION TECHNOLOGY CO.,LTD.</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>发件邮箱</label>
+        <input type="text" id="routeEmail" value="zoe@aigostar.com" disabled>
+      </div>
+      <div class="form-row">
+        <label>是否默认规则</label>
+        <select>
+          <option>否</option>
+          <option>是（未命中其他规则时使用）</option>
+        </select>
+      </div>
+
+      <div class="form-section">收件人配置</div>
+      <div class="form-row">
+        <label>目的组织</label>
+        <select>
+          <option>ARTE LIGHT S.R.L. (IT)</option>
+          <option>EURO PET S.R.L. (IT)</option>
+          <option>AIGOSTAR SARL (FR)</option>
+          <option>IMPERIAL NOBLEZA SL (ES)</option>
+          <option>ALPHA AIGOSTAR SL (ES)</option>
+          <option>AIGOTECH ONSYNK S.L (ES)</option>
+          <option>AIGOSTAR SP.Z O.O. (PL)</option>
+          <option>AIGOSTAR INTERNATIONAL LIMITED (GB)</option>
+          <option>Aigostar GmbH (DE)</option>
+          <option>AIGOSTAR INC (US)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>收件人邮箱</label>
+        <input type="text" value="admin02@artelights.com" placeholder="多个邮箱用分号分隔">
+      </div>
+      <div class="form-row">
+        <label>抄送人邮箱</label>
+        <input type="text" value="financial@artelights.com" placeholder="多个邮箱用分号分隔">
+      </div>
+      <div class="form-row">
+        <label>密送人邮箱</label>
+        <input type="text" placeholder="多个邮箱用分号分隔">
+      </div>
+
+      <div class="form-section">触发与模板配置</div>
+      <div class="form-row">
+        <label>触发方式</label>
+        <select id="triggerType" onchange="toggleSendTime()">
+          <option value="daily">每日合并（无数据不发）</option>
+          <option value="instant">货柜即时（审批通过触发）</option>
+        </select>
+      </div>
+      <div class="form-row" id="sendTimeRow">
+        <label>发送时间</label>
+        <input type="time" value="01:00">
+      </div>
+      <div class="form-row">
+        <label>触发条件</label>
+        <select>
+          <option>清关资料审批终审通过</option>
+          <option>销售单审核通过</option>
+          <option>入库单审核通过</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>关联邮件模板</label>
+        <select>
+          <option>CN-HK-0001 国内→香港出货通知（中文）</option>
+          <option>HK-XX-0001 香港→国外清关通知（英文）</option>
+        </select>
+      </div>
+
+      <div class="form-section">状态与备注</div>
+      <div class="form-row">
+        <label>状态</label>
+        <select>
+          <option>启用</option>
+          <option>停用</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>备注</label>
+        <textarea rows="2" placeholder="规则说明"></textarea>
+      </div>
+
+      <div style="text-align:right;margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" style="margin-right:auto">删除规则</button>
+        <button class="btn btn-primary" onclick="closeModal();toast('路由规则已保存')">保存</button>
+      </div>
+    `;
+    openModal(html, '编辑路由规则', false, true);
+  }
+
+  function toggleSendTime() {
+    const val = document.getElementById('triggerType').value;
+    document.getElementById('sendTimeRow').style.display = val === 'daily' ? 'grid' : 'none';
+  }
+
+  function updateRouteEmail() {
+    const sel = document.getElementById('routeOrgSelect');
+    const email = sel.options[sel.selectedIndex].dataset.email;
+    document.getElementById('routeEmail').value = email;
+  }
+
+  /* ---------- 3. 新建模板弹窗 ---------- */
+  function openNewTplModal() {
+    const html = `
+      <div class="form-section">基础信息</div>
+      <div class="form-row">
+        <label>发件国家</label>
+        <select id="newTplFrom" onchange="genTplCode()">
+          <option value="CN">CN</option>
+          <option value="HK">HK</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>收件国家</label>
+        <select id="newTplTo" onchange="genTplCode()">
+          <option value="HK">HK</option>
+          <option value="XX">XX（通用）</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>模板编码</label>
+        <input type="text" id="newTplCode" value="CN-HK-0003" disabled>
+      </div>
+      <div class="form-row">
+        <label>模板名称</label>
+        <input type="text" placeholder="请输入模板名称">
+      </div>
+      <div class="form-row">
+        <label>适用场景</label>
+        <select>
+          <option>每日合并推送</option>
+          <option>货柜即时推送</option>
+        </select>
+      </div>
+
+      <div class="form-section">邮件主题</div>
+      <div class="form-row">
+        <label>邮件主题</label>
+        <input type="text" placeholder="请输入邮件主题，支持变量">
+      </div>
+
+      <div class="form-section">邮件正文</div>
+      <div class="form-toolbar">
+        <button class="btn btn-sm">加粗</button>
+        <button class="btn btn-sm">插入变量</button>
+        <button class="btn btn-sm">预览效果</button>
+      </div>
+      <div class="editor" contenteditable="true">
+        <p>请在此输入邮件正文...</p>
+      </div>
+
+      <div style="text-align:right;margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="closeModal();toast('模板已创建')">创建模板</button>
+      </div>
+    `;
+    openModal(html, '新建邮件模板', false, true);
+  }
+
+  function genTplCode() {
+    const from = document.getElementById('newTplFrom').value;
+    const to = document.getElementById('newTplTo').value;
+    document.getElementById('newTplCode').value = from + '-' + to + '-0003';
+  }
+
+  /* ---------- 4. 邮件模板详细维护弹窗 ---------- */
+  function openTplModal(type) {
+    let tplName, subject, body, attachDesc, code;
+    if(type === 'cn') {
+      code = 'CN-HK-0001';
+      tplName = '国内→香港出货通知（中文）';
+      subject = '出货通知';
+      body = `
+        <p>尊敬的客户：</p>
+        <p>感谢您长期以来对我司的信任与支持！</p>
+        <p>根据贵司的出货需求，附件为近期的出货清单及明细，具体内容详见附件，敬请查收核对。</p>
+        <p>如对清单内容有任何疑问或需进一步调整，欢迎随时与我们联系。</p>
+        <p>期待与贵司继续保持紧密合作！</p>
+        <p>顺颂商祺</p>
+      `;
+      attachDesc = '导出账套商品销售明细（含单据号、条码、数量、单价等字段）';
+    } else {
+      code = 'HK-XX-0001';
+      tplName = '香港→国外清关通知（英文）';
+      subject = 'Notification of Container Shipment';
+      body = `
+        <p>Dear,</p>
+        <p>Thank you for your continued trust and support.</p>
+        <p>Per your shipment request, we have prepared the detailed packing list and the corresponding invoice for this container. Please kindly find the attached documents for your review and verification.</p>
+        <p>Should you have any questions regarding the list or require any further adjustments, please feel free to reach out to us.</p>
+        <p>We look forward to our continued close cooperation.</p>
+        <p>&nbsp;</p>
+        <p>Best regards,</p>
+      `;
+      attachDesc = '审批通过的清关资料文件（含系统溢价）';
+    }
+
+    const html = `
+      <div class="form-section">基础信息</div>
+      <div class="form-row-inline">
+        <label>模板编码</label>
+        <input type="text" value="${code}" disabled>
+        <select disabled>
+          <option>${type === 'cn' ? '每日合并推送' : '货柜即时推送'}</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>模板名称</label>
+        <input type="text" value="${tplName}">
+      </div>
+
+      <div class="form-section">邮件主题配置</div>
+      <div class="form-row">
+        <label>邮件主题</label>
+        <input type="text" value="${subject}">
+      </div>
+      <div style="margin:-6px 0 14px 120px">
+        <div class="var-tags">
+          <span class="var-tag">{{发件公司}}</span>
+          <span class="var-tag">{{日期}}</span>
+          <span class="var-tag">{{货柜号}}</span>
+        </div>
+      </div>
+
+      <div class="form-section">邮件正文配置</div>
+      <div class="form-toolbar">
+        <button class="btn btn-sm">加粗</button>
+        <button class="btn btn-sm">插入变量</button>
+        <button class="btn btn-sm">预览效果</button>
+      </div>
+      <div class="editor">
+        ${body}
+      </div>
+
+      <div class="form-section">附件配置</div>
+      <div class="form-row">
+        <label>附件来源</label>
+        <select>
+          <option>${attachDesc}</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>附件命名规则</label>
+        <input type="text" value="${type === 'cn' ? '{{公司缩写}}_{{日期}}_销售明细.xlsx' : '{{清关单号}}_{{货柜号}}_清关资料.pdf'}">
+      </div>
+
+      <div style="text-align:right;margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="closeModal()">取消</button>
+        <button class="btn" onclick="toast('已恢复默认模板')">恢复默认</button>
+        <button class="btn btn-primary" onclick="closeModal();toast('邮件模板已保存')">保存模板</button>
+      </div>
+    `;
+    openModal(html, '编辑邮件模板', false, true);
+  }
+
+  /* ---------- 每日合并邮件预览（中文模板） ---------- */
+  function openDailyPreview() {
+    const html = `
+      <dl class="mail-meta">
+        <dt>发件人</dt><dd>AGZZX OPTOELECTRONICS &lt;leo@fzagzzx.com&gt;</dd>
+        <dt>收件人</dt><dd>zoe@aigostar.com</dd>
+        <dt>抄送</dt><dd>finance@fzagzzx.com</dd>
+      </dl>
+      <div class="mail-subject">出货通知</div>
+      <div class="attachment">
+        <span class="icon">XLS</span>
+        <div>
+          <div style="font-weight:600">AGZZX_20261026_销售明细.xlsx</div>
+          <div style="font-size:11.5px;color:#667085">导出账套商品销售明细，含单据号、条码、数量、单价</div>
+        </div>
+      </div>
+      <div class="mail-body">
+        <p>尊敬的客户：</p>
+        <p>感谢您长期以来对我司的信任与支持！</p>
+        <p>根据贵司的出货需求，附件为近期的出货清单及明细，具体内容详见附件，敬请查收核对。</p>
+        <p>如对清单内容有任何疑问或需进一步调整，欢迎随时与我们联系。</p>
+        <p>期待与贵司继续保持紧密合作！</p>
+        <p>顺颂商祺</p>
+      </div>
+    `;
+    openModal(html, '邮件预览', true);
+  }
+
+  /* ---------- 货柜邮件预览（英文模板） ---------- */
+  function openContainerPreview(container, country, company, to, docNo) {
+    const html = `
+      <dl class="mail-meta">
+        <dt>From</dt><dd>AIGOSTAR SPAIN LIMITED HK &lt;zoe@aigostar.com&gt;</dd>
+        <dt>To</dt><dd>${company} &lt;${to}&gt;</dd>
+        <dt>Country</dt><dd>${country}</dd>
+        <dt>CC</dt><dd>financial@artelights.com</dd>
+      </dl>
+      <div class="mail-subject">Notification of Container Shipment</div>
+      <div class="attachment">
+        <span class="icon">PDF</span>
+        <div>
+          <div style="font-weight:600">${docNo}_${container}_清关资料.pdf</div>
+          <div style="font-size:11.5px;color:#667085">清关资料审批通过附件，含系统溢价明细</div>
+        </div>
+      </div>
+      <div class="mail-body">
+        <p>Dear,</p>
+        <p>Thank you for your continued trust and support.</p>
+        <p>Per your shipment request, we have prepared the detailed packing list and the corresponding invoice for this container. Please kindly find the attached documents for your review and verification.</p>
+        <p>Should you have any questions regarding the list or require any further adjustments, please feel free to reach out to us.</p>
+        <p>We look forward to our continued close cooperation.</p>
+        <p>&nbsp;</p>
+        <p>Best regards,</p>
+      </div>
+    `;
+    openModal(html, '清关邮件预览', true);
+  }
+
+  /* ---------- 日志详情 ---------- */
+  function openLogDetail() {
+    const html = `
+      <dl class="mail-meta">
+        <dt>发送时间</dt><dd>2026-10-26 11:15:08</dd>
+        <dt>场景</dt><dd><span class="badge blue">货柜即时</span></dd>
+        <dt>发件组织</dt><dd>AIGOLEO LIMITED HK</dd>
+        <dt>发件邮箱</dt><dd class="mono">cloud@aigoleo.hk</dd>
+        <dt>收件人</dt><dd class="mono">Aigostarfr@aigostar.com</dd>
+        <dt>抄送</dt><dd>luna@aigostar.com</dd>
+        <dt>关联单据</dt><dd class="mono">清关资料单 AASCGHG202602250002 / 货柜 TCLU7654321</dd>
+        <dt>幂等键</dt><dd class="mono">TCLU7654321 / AASCGHG202602250002</dd>
+        <dt>发送状态</dt><dd><span class="badge green">发送成功</span></dd>
+        <dt>重试次数</dt><dd>0 次</dd>
+      </dl>
+      <div class="mail-subject">Notification of Container Shipment</div>
+      <div class="attachment">
+        <span class="icon">PDF</span>
+        <div>
+          <div style="font-weight:600">AASCGHG202602250002_TCLU7654321_清关资料.pdf</div>
+          <div style="font-size:11.5px;color:#667085">清关资料审批通过附件，含系统溢价明细</div>
+        </div>
+      </div>
+      <div class="mail-body">
+        <p>Dear,</p>
+        <p>Thank you for your continued trust and support.</p>
+        <p>Per your shipment request, we have prepared the detailed packing list and the corresponding invoice for this container. Please kindly find the attached documents for your review and verification.</p>
+        <p>Best regards,</p>
+      </div>
+    `;
+    openModal(html, '推送日志详情', true);
+  }
+
+  /* ---------- 行内操作 ---------- */
+  function pushDaily(btn) {
+    const row = btn.closest('tr');
+    row.querySelector('td:nth-child(8)').innerHTML = '<span class="badge green">已推送</span>';
+    btn.parentElement.innerHTML = '<button class="btn btn-sm btn-ghost" onclick="openDailyPreview()">查看邮件</button>';
+    toast('批次已推送');
+  }
+
+  function retryPush(btn) {
+    const row = btn.closest('tr');
+    row.querySelector('td:nth-child(7)').innerHTML = '<span class="badge green">已发送</span>';
+    btn.parentElement.innerHTML = '<button class="btn btn-sm btn-ghost">查看邮件</button>';
+    toast('已重新推送成功');
+  }
+
+  function retryFail() {
+    closeModal();
+    toast('已使用新收件人地址重试推送');
+    goToFail();
+  }
+</script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->
